@@ -1,7 +1,7 @@
 import validator from 'validator'
 import bcrypt from 'bcrypt'
-import userModel from '../models/userModel.js'
-
+import userModel from '../models/usermodel.js'
+import jwt from 'jsonwebtoken'
 // api to register
 export const registerUser = async (req, res) => {
     try {
@@ -56,6 +56,60 @@ export const registerUser = async (req, res) => {
         res.json({ success: true })
 
     } catch (error) {
+        console.log(error)
+        res.status(400).json({ success: false, message: error.message })
+    }
+}
+
+export const login = async (req, res) => {
+    try {
+        const { email, password } = req.body
+
+        if (!email || !password) {
+            return res.json({ success: fasle, message: 'missing email or password' })
+        }
+
+        const user = await userModel.findOne({ email })
+
+        if (!user) {
+            return res.json({ success: false, message: 'email not found' })
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password)
+
+        if (!isMatch) {
+            return res.json({ success: false, message: 'wrong password' })
+        }
+
+        const accesstoken = jwt.sign({ _id: user._id }, process.env.ACCESS_TOKEN_SECRET)
+
+        return res.json({ success: true, message: 'login success', accesstoken })
+    }
+    catch (error) {
+        console.log(error)
+        res.status(400).json({ success: false, message: error.message })
+    }
+}
+
+export const getUser = async (req, res) => {
+    try{
+        const {userId} = req.body
+
+        const user = await userModel.findById(userId)
+        res.json({success: true, user})
+    }
+    catch (error) {
+        console.log(error)
+        res.status(400).json({ success: false, message: error.message })
+    }
+}
+export const allUser = async (req, res) => {
+    try{
+        const allUser = await userModel.find()
+
+        res.json({success: true, allUser})
+    }
+    catch (error) {
         console.log(error)
         res.status(400).json({ success: false, message: error.message })
     }
