@@ -2,6 +2,7 @@ import validator from 'validator'
 import bcrypt from 'bcrypt'
 import userModel from '../models/usermodel.js'
 import jwt from 'jsonwebtoken'
+import cloudinary from 'cloudinary'
 // api to register
 export const registerUser = async (req, res) => {
     try {
@@ -108,6 +109,56 @@ export const allUser = async (req, res) => {
         const allUser = await userModel.find()
 
         res.json({success: true, allUser})
+    }
+    catch (error) {
+        console.log(error)
+        res.status(400).json({ success: false, message: error.message })
+    }
+}
+export const updateProfile = async (req, res) => {
+    try{
+        const {userId, username, phone, dob} = req.body
+        const image = req.file
+        console.log(userId)
+        const user = await userModel.findById(userId)
+
+        if(!user) {
+            return res.json({success: false, message: 'user not found'})
+        }
+
+        if(username) {
+            await userModel.findByIdAndUpdate(userId, {username})
+        }
+
+        if(phone) {
+            await userModel.findByIdAndUpdate(userId, {phone})
+        }
+        
+        if(dob) {
+            await userModel.findByIdAndUpdate(userId, {dob})
+        }
+
+        if (image) {
+            // upload image to cloudinary
+            const imageUpload = await cloudinary.uploader.upload(image.path, { resource_type: 'image' })
+            const imageUrl = imageUpload.secure_url
+
+            await userModel.findByIdAndUpdate(userId, { image: imageUrl })
+        }
+        res.json({ success: true, messgae: 'profile updated' })
+    }
+    catch (error) {
+        console.log(error)
+        res.status(400).json({ success: false, message: error.message })
+    }
+}
+export const deleteUser = async (req, res) => {
+    try{
+        const {userId} = req.body
+
+        await userModel.findByIdAndDelete(userId)
+
+        res.json({success: true,message: 'user has been deleted'})
     }
     catch (error) {
         console.log(error)
