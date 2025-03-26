@@ -1,29 +1,30 @@
 import axios from "axios";
 import { useState } from "react";
-
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = () => {
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const navigate = useNavigate(); 
 
     const login = async (e) => {
         e.preventDefault();
-        console.log(email, password);
+        setError('');
 
         try {
-            const { data } = await axios.post(import.meta.env.VITE_BACKEND_URL +'/api/user/login', { email, password });
+            const { data } = await axios.post(import.meta.env.VITE_BACKEND_URL + '/api/user/login', { email, password });
 
             if (data.success) {
                 console.log('Logged in');
+                navigate('/');
             } else {
-                console.log('Error logging in');
+                setError(data.message || 'Error logging in');
             }
+        } catch (error) {
+            setError(error.response?.data?.message || 'Error logging in');
         }
-        catch {
-            console.log('Error logging in!!!!!!!!');
-        }
-    }
+    };
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -31,7 +32,12 @@ const Login = () => {
                 <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
                     Welcome Back
                 </h2>
-                <form type="submit" className="space-y-4">
+                {error && (
+                    <div className="mb-4 text-red-500 text-sm text-center">
+                        {error}
+                    </div>
+                )}
+                <form className="space-y-4" onSubmit={login}>
                     <div>
                         <label className="block text-gray-600 mb-1" htmlFor="email">
                             Email
@@ -60,18 +66,20 @@ const Login = () => {
                     </div>
                     <button
                         type="submit"
-                        onClick={login}
                         className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300"
                     >
                         Sign In
                     </button>
                 </form>
                 <p className="text-center text-gray-500 text-sm mt-4">
-                    Don't have an account? <a href="#" className="text-blue-500 hover:underline">Sign up</a>
+                    Don't have an account? 
+                    <Link to="/signup" className="text-blue-500 hover:underline">
+                        Sign up
+                    </Link>
                 </p>
             </div>
         </div>
     );
-}
+};
 
 export default Login;
